@@ -160,7 +160,29 @@ def regulaFalsi(x0, x1, precisao, iteracao, fila_organizada):
         print(f"Valor encontrado a cada iteração: {novo:.8f}, f(x) = {calcularString(fila_organizada, novo):.8f}")
 
     print(f"Número de iterações necessárias: {k}")
-    return novo    
+    return novo
+
+def mil(x0, precisao, iteracao, fila_organizada):
+    # Passo 2: Verifica se |f(x0)| < precisao e finaliza
+    if abs(calcularString(fila_organizada, x0)) < precisao:
+        print(f"Condição inicial atendida, f(x0) = {calcularString(fila_organizada, x0)}")
+        return x0
+
+    k = 1  # Passo 3: Inicializa contador de iterações
+    while (k <= iteracao):
+        x1 = calcularString(fila_organizada, x0)
+
+        print(f"Iteração {k}: x0 = {x0}, x1 = {x1}, |f(x1)| = {abs(calcularString(fila_organizada, x1))}")
+
+        if (abs(calcularString(fila_organizada, x1)) < precisao) or (abs(x1 - x0) < precisao) or (k > iteracao):
+            print(f"Condição de parada atendida na iteração {k}, |f(x1)| = {abs(calcularString(fila_organizada, x1))}, |x1 - x0| = {abs(x1 - x0)}")
+            return x1
+
+        x0 = x1
+        k += 1
+
+    print(f"Valor de x encontrado: {x1} após {k} iterações")
+    return x1
 
 # Função principal
 def main():
@@ -168,15 +190,16 @@ def main():
     fila_organizada = processString(expressao)
 
     metodo = 0
-    while (metodo != 7):
+    while (metodo != 8):
         print("Qual metodo deseja escolher?")
         print("1 - Bissecção")
         print("2 - Secante")
         print("3 - Newton")
         print("4 - Regula Falsi")
-        print("5 - deseja mudar a expressão?")
-        print("6 - só calcula essa bomba aí")
-        print("7 - SAIR")
+        print("5 - MIL")
+        print("6 - deseja mudar a expressão?")
+        print("7 - só calcula essa bomba aí")
+        print("8 - SAIR")
         metodo = int(input())
 
         match metodo:
@@ -210,10 +233,16 @@ def main():
                 print(regulaFalsi(x0, x1, precisao, iteracao, fila_organizada))
 
             case 5:
+                x0 = float(input("Escolha o valor inicial (x0): "))
+                iteracao = int(input("Qual o numero maximo de iteracoes: "))
+                precisao = float(input("Qual a precisao: "))
+                mil(x0, precisao, iteracao, fila_organizada)
+
+            case 6:
                 expressao = input("Digite a expressao matematica: ")
                 fila_organizada = processString(expressao)
 
-            case 6:
+            case 7:
                 x0 = float(input("escolha o valor de x: "))
                 print(calcularString(fila_organizada, x0))
 

@@ -19,9 +19,9 @@ def isFuncao(token):
     return token in ['sen', 'cos', 'tan', 'cossec', 'sec', 'cotg', 'log']
 
 # Função para avaliar uma expressão na forma pós-fixa (RPN)
-def calcularString(fila_organizada, valor_de_x):
+def calcularString(filaOrganizada, valor_de_x):
     valores = []
-    for token in fila_organizada:
+    for token in filaOrganizada:
         if ((token.replace('.', '').isdigit()) or (token[0] == '-' and token[1:].replace('.', '').isdigit())):
             valores.append(float(token))
         elif (token == 'x'):
@@ -31,32 +31,36 @@ def calcularString(fila_organizada, valor_de_x):
         elif (isOperador(token)):
             num2 = valores.pop()
             num1 = valores.pop()
-            if (token == '+'):
-                valores.append(num1 + num2)
-            elif (token == '-'):
-                valores.append(num1 - num2)
-            elif (token == '*'):
-                valores.append(num1 * num2)
-            elif (token == '/'):
-                valores.append(num1 / num2)
-            elif (token == '^'):
-                valores.append(math.pow(num1, num2))
+
+            match token:
+                case '+':
+                    valores.append(num1 + num2)
+                case '-':
+                    valores.append(num1 - num2)
+                case '*':
+                    valores.append(num1 * num2)
+                case '/':
+                    valores.append(num1 / num2)
+                case '^':
+                    valores.append(math.pow(num1, num2))
+
         elif (isFuncao(token)):
             num = valores.pop()
-            if (token == 'sen'):
-                valores.append(math.sin(num))
-            elif (token == 'cos'):
-                valores.append(math.cos(num))
-            elif (token == 'tan'):
-                valores.append(math.tan(num))
-            elif (token == 'cossec'):
-                valores.append(1 / math.sin(num))
-            elif (token == 'sec'):
-                valores.append(1 / math.cos(num))
-            elif (token == 'cotg'):
-                valores.append(1 / math.tan(num))
-            elif (token == 'log'):
-                valores.append(math.log(num))
+            match token:
+                case 'sen':
+                    valores.append(math.sin(num))
+                case 'cos':
+                    valores.append(math.cos(num))
+                case 'tan':
+                    valores.append(math.tan(num))
+                case 'cossec':
+                    valores.append(1 / math.sin(num))
+                case 'sec':
+                    valores.append(1 / math.cos(num))
+                case 'cotg':
+                    valores.append(1 / math.tan(num))
+                case 'log':
+                    valores.append(math.log(num))
     return valores.pop()
 
 # Função para converter uma expressão infixa para pós-fixa (RPN)
@@ -104,90 +108,84 @@ def processString(exp):
 
     return saida
 
-# Função de Bissecção
-def bisseccao(x0, x1, precisao, iteracao, fila_organizada):
-    k = 0
-    while abs(x1 - x0) > precisao and k < iteracao:
-        div = (x0 + x1) / 2
-        f_div = calcularString(fila_organizada, div)
+def bissec(x0, x1, precisao, iteracao, filaOrganizada):
+    if (calcularString(filaOrganizada, x0) * calcularString(filaOrganizada, x1) >= 0):
+        print("A função não muda de sinal no intervalo dado. O método da bissecção não pode ser aplicado.")
+        return None
 
-        print(f"Iteração {k}: x0 = {x0}, x1 = {x1}, div = {div}, f(div) = {f_div}")
-
-        if f_div * calcularString(fila_organizada, x0) < 0:
-            x1 = div
+    for k in range(iteracao):
+        x = (x0 + x1) / 2
+        print(f"Iteração {k}: x0 = {x0}, x1 = {x1}, div = {x}, f(div) = {calcularString(filaOrganizada, x)}")
+        if (abs(calcularString(filaOrganizada, x)) < precisao):
+            return x
+        elif (calcularString(filaOrganizada, x0) * calcularString(filaOrganizada, x) < 0):
+            x1 = x
         else:
-            x0 = div
-        k += 1
+            x0 = x
 
-    print(f"Número de iterações necessárias: {k}")
-    return div
+    print("O método da bissecção não convergiu dentro do número máximo de iterações.")
+    return None
 
 # Função da Secante
-def sec(x0, x1, precisao, iteracao, fila_organizada):
-    k = 0
-    while k < iteracao and abs(calcularString(fila_organizada, x1)) > precisao:
-        novo = x1 - (calcularString(fila_organizada, x1) * (x1 - x0)) / (calcularString(fila_organizada, x1) - calcularString(fila_organizada, x0))
-        x0 = x1
+def sec(x0, x1, precisao, iteracao, filaOrganizada):
+    for _ in range(iteracao):
+        novo = x1 - calcularString(filaOrganizada, x1) * (x1 - x0) / (calcularString(filaOrganizada, x1) - calcularString(filaOrganizada, x0))
+        if abs(novo - x1) < precisao:
+            print(f"Valor encontrado a cada iteração: {novo}, f(novo) = {calcularString(filaOrganizada, novo)}")
+            return novo
+        x0 = x1 
         x1 = novo
-        print(f"Valor encontrado a cada iteração: {novo:.8f}, f(x) = {calcularString(fila_organizada, novo):.8f}")
-        k += 1
 
-    print(f"Número de iterações necessárias: {k}")
-    return x1
+    print("O método da secante não convergiu dentro do número máximo de iterações.")
+    return None
 
 # Função de Newton
-def newton(x0, precisao, iteracao, fila_organizada, expressao_derivada):
+def newton(x0, precisao, iteracao, filaOrganizada, expressao_derivada):
     k = 0
-    while k < iteracao and abs(calcularString(fila_organizada, x0)) > precisao:
-        novo = x0 - calcularString(fila_organizada, x0) / calcularString(expressao_derivada, x0)
+    while k < iteracao and abs(calcularString(filaOrganizada, x0)) > precisao:
+        novo = x0 - calcularString(filaOrganizada, x0) / calcularString(expressao_derivada, x0)
         x0 = novo
-        print(f"Valor encontrado a cada iteração: {novo:.8f}, f(x) = {calcularString(fila_organizada, novo):.8f}")
+        print(f"Valor encontrado a cada iteração: {novo:.8f}, f(x) = {calcularString(filaOrganizada, novo):.8f}")
         k += 1
 
     print(f"Número de iterações necessárias: {k}")
     return x0
 
 # Função Regula Falsi
-def regulaFalsi(x0, x1, precisao, iteracao, fila_organizada):
+def regulaFalsi(x0, x1, precisao, iteracao, filaOrganizada):
     k = 0
-    while k < iteracao and abs(calcularString(fila_organizada, x0)) > precisao and abs(calcularString(fila_organizada, x1)) > precisao:
-        novo = (x0 * calcularString(fila_organizada, x1) - x1 * calcularString(fila_organizada, x0)) / (calcularString(fila_organizada, x1) - calcularString(fila_organizada, x0))
-        if calcularString(fila_organizada, novo) < 0:
+    while k < iteracao and abs(calcularString(filaOrganizada, x0)) > precisao and abs(calcularString(filaOrganizada, x1)) > precisao:
+        novo = (x0 * calcularString(filaOrganizada, x1) - x1 * calcularString(filaOrganizada, x0)) / (calcularString(filaOrganizada, x1) - calcularString(filaOrganizada, x0))
+        if calcularString(filaOrganizada, novo) < 0:
             x0 = novo
         else:
             x1 = novo
         k += 1
-        print(f"Valor encontrado a cada iteração: {novo:.8f}, f(x) = {calcularString(fila_organizada, novo):.8f}")
+        print(f"Valor encontrado a cada iteração: {novo:.8f}, f(x) = {calcularString(filaOrganizada, novo):.8f}")
 
     print(f"Número de iterações necessárias: {k}")
     return novo
 
-def mil(x0, precisao, iteracao, fila_organizada):
+def mil(x0, precisao, iteracao, filaOrganizada):
     # Passo 2: Verifica se |f(x0)| < precisao e finaliza
-    if abs(calcularString(fila_organizada, x0)) < precisao:
-        print(f"Condição inicial atendida, f(x0) = {calcularString(fila_organizada, x0)}")
+    if abs(calcularString(filaOrganizada, x0)) < precisao:
+        print(f"Condição inicial atendida, f(x0) = {calcularString(filaOrganizada, x0)}")
         return x0
 
     k = 1  # Passo 3: Inicializa contador de iterações
-    while (k <= iteracao):
-        x1 = calcularString(fila_organizada, x0)
-
-        print(f"Iteração {k}: x0 = {x0}, x1 = {x1}, |f(x1)| = {abs(calcularString(fila_organizada, x1))}")
-
-        if (abs(calcularString(fila_organizada, x1)) < precisao) or (abs(x1 - x0) < precisao) or (k > iteracao):
-            print(f"Condição de parada atendida na iteração {k}, |f(x1)| = {abs(calcularString(fila_organizada, x1))}, |x1 - x0| = {abs(x1 - x0)}")
-            return x1
-
-        x0 = x1
-        k += 1
-
-    print(f"Valor de x encontrado: {x1} após {k} iterações")
-    return x1
+    for i in range(iteracao):
+        novo = calcularString(filaOrganizada, x0)
+        print(f"Iteração {i}: x0 = {x0}, x1 = {novo}, |f(x1)| = {abs(calcularString(filaOrganizada, novo))}")
+        if (abs(novo - x0) < precisao):
+            return novo
+        x0 = novo
+    print("O método não convergiu dentro do número máximo de iterações.")
+    return None
 
 # Função principal
 def main():
     expressao = input("Digite a expressao matematica: ")
-    fila_organizada = processString(expressao)
+    filaOrganizada = processString(expressao)
 
     metodo = 0
     while (metodo != 8):
@@ -208,14 +206,14 @@ def main():
                 x1 = float(input("Escolha o valor maximo: "))
                 iteracao = int(input("Qual o numero maximo de iteracoes: "))
                 precisao = float(input("Qual a precisao: "))
-                bisseccao(x0, x1, precisao, iteracao, fila_organizada)
+                bissec(x0, x1, precisao, iteracao, filaOrganizada)
 
             case 2:
                 x0 = float(input("Escolha o valor minimo: "))
                 x1 = float(input("Escolha o valor maximo: "))
                 iteracao = int(input("Qual o numero maximo de iteracoes: "))
                 precisao = float(input("Qual a precisao: "))
-                print(sec(x0, x1, precisao, iteracao, fila_organizada))
+                print(sec(x0, x1, precisao, iteracao, filaOrganizada))
 
             case 3:
                 derivada = input("Escreva a derivada da função: ")
@@ -223,28 +221,28 @@ def main():
                 iteracao = int(input("Qual o numero maximo de iteracoes: "))
                 precisao = float(input("Qual a precisao: "))
                 expressao_derivada = processString(derivada)
-                newton(x0, precisao, iteracao, fila_organizada, expressao_derivada)
+                newton(x0, precisao, iteracao, filaOrganizada, expressao_derivada)
 
             case 4:
                 x0 = float(input("Escolha o valor minimo: "))
                 x1 = float(input("Escolha o valor maximo: "))
                 iteracao = int(input("Qual o numero maximo de iteracoes: "))
                 precisao = float(input("Qual a precisao: "))
-                print(regulaFalsi(x0, x1, precisao, iteracao, fila_organizada))
+                print(regulaFalsi(x0, x1, precisao, iteracao, filaOrganizada))
 
             case 5:
                 x0 = float(input("Escolha o valor inicial (x0): "))
                 iteracao = int(input("Qual o numero maximo de iteracoes: "))
                 precisao = float(input("Qual a precisao: "))
-                mil(x0, precisao, iteracao, fila_organizada)
+                mil(x0, precisao, iteracao, filaOrganizada)
 
             case 6:
                 expressao = input("Digite a expressao matematica: ")
-                fila_organizada = processString(expressao)
+                filaOrganizada = processString(expressao)
 
             case 7:
                 x0 = float(input("escolha o valor de x: "))
-                print(calcularString(fila_organizada, x0))
+                print(calcularString(filaOrganizada, x0))
 
 
 if __name__ == "__main__":

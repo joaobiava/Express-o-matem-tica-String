@@ -16,7 +16,7 @@ def isOperador(token):
 
 # Função para verificar se o token é uma função matemática
 def isFuncao(token):
-    return token in ['sen', 'cos', 'tan', 'cossec', 'sec', 'cotg', 'log']
+    return token in ['sen', 'cos', 'tan', 'cossec', 'sec', 'cotg', 'log', 'ln']
 
 # Função para avaliar uma expressão na forma pós-fixa (RPN)
 def calcularString(filaOrganizada, valor_de_x):
@@ -61,49 +61,71 @@ def calcularString(filaOrganizada, valor_de_x):
                     valores.append(1 / math.tan(num))
                 case 'log':
                     valores.append(math.log(num))
+                case 'ln':
+                    valores.append(math.log(num))
     return valores.pop()
 
 # Função para converter uma expressão infixa para pós-fixa (RPN)
 def processString(exp):
-    operadores = []
-    saida = []
-    num = ""
-    funcao = ""
+    operadores = []  # Pilha para operadores e funções
+    saida = []  # Lista para notação pós-fixa
+    num = ""  # Acumular números
+    funcao = ""  # Acumular nomes de funções
 
-    for i, c in enumerate(exp):
-        if ((c.isdigit()) or (c == '.')):
+    i = 0
+    while (i < len(exp)):
+        c = exp[i]
+
+        if (c.isdigit() or c == '.'):  # Construir número
             num += c
+
         else:
-            if (num):
+            if (num):  # Adicionar número acumulado na saída
                 saida.append(num)
                 num = ""
-            if ((c == 'x') or (c == 'e')):
+
+            if (c == ' '):
+                pass
+
+            elif (c in ['x', 'e']):  # Variáveis ou constantes
                 saida.append(c)
-            elif (c == '('):
-                operadores.append(c)
-            elif (c == ')'):
-                while (operadores and operadores[-1] != '('):
-                    saida.append(operadores.pop())
-                operadores.pop()
-                if (operadores and isFuncao(operadores[-1])):
-                    saida.append(operadores.pop())
-            elif (c.isalpha()):
+
+            elif (c.isalpha()):  # Nome de função como `ln` ou `sen`
                 funcao += c
-                while (i + 1 < len(exp) and exp[i + 1].isalpha()):
-                    funcao += exp[i + 1]
+
+                while ((i + 1 < len(exp)) and (exp[i + 1].isalpha())):
                     i += 1
+                    funcao += exp[i]
+
                 operadores.append(funcao)
                 funcao = ""
-            else:
-                op = c
+
+            elif (c == '('):  # Início de subexpressão
+                operadores.append(c)
+
+            elif (c == ')'):  # Fim de subexpressão
+
+                while (operadores and operadores[-1] != '('):
+                    saida.append(operadores.pop())
+
+                operadores.pop()  # Remover '('
+
+                if (operadores and isFuncao(operadores[-1])):  # Adicionar função
+                    saida.append(operadores.pop())
+
+            elif (isOperador(c)):  # Operadores como +, -, *, etc.
+
                 while (operadores and prioridade(operadores[-1]) >= prioridade(c)):
                     saida.append(operadores.pop())
-                operadores.append(op)
-    
-    if (num):
+
+                operadores.append(c)
+
+        i += 1
+
+    if (num):  # Adicionar último número na saída
         saida.append(num)
 
-    while (operadores):
+    while (operadores):  # Adicionar operadores restantes
         saida.append(operadores.pop())
 
     return saida
@@ -167,22 +189,21 @@ def regulaFalsi(x0, x1, precisao, iteracao, filaOrganizada):
     return novo
 
 def mil(x0, precisao, iteracao, filaOrganizada):
-    # Passo 2: Verifica se |f(x0)| < precisao e finaliza
-    if abs(calcularString(filaOrganizada, x0)) < precisao:
+    if (abs(calcularString(filaOrganizada, x0)) < precisao):
         print(f"Condição inicial atendida, f(x0) = {calcularString(filaOrganizada, x0)}")
         return x0
 
-    k = 1  # Passo 3: Inicializa contador de iterações
     for i in range(iteracao):
         novo = calcularString(filaOrganizada, x0)
         print(f"Iteração {i}: x0 = {x0}, x1 = {novo}, |f(x1)| = {abs(calcularString(filaOrganizada, novo))}")
+
         if (abs(novo - x0) < precisao):
             return novo
+        
         x0 = novo
     print("O método não convergiu dentro do número máximo de iterações.")
     return None
 
-# Função principal
 def main():
     expressao = input("Digite a expressao matematica: ")
     filaOrganizada = processString(expressao)

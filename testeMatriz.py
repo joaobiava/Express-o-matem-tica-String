@@ -1,6 +1,6 @@
 def imprimir_matriz(matriz):
     for linha in matriz:
-        print("  ".join(f"{valor:.2f}" for valor in linha))
+        print("  ".join(f"{valor}" for valor in linha))
 
 def fatoracao_LU(A, b):
     n = len(A)
